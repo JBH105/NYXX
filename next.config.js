@@ -1,5 +1,3 @@
-/** @type {import('next').NextConfig} */
-
 const nextConfig = {
   swcMinify: true,
   basePath: process.env.NEXT_PUBLIC_BASE_PATH,
@@ -12,9 +10,10 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  experimental: {
-    appDir: true,
-  },
+  // Remove or update this section
+  // experimental: {
+  //   appDir: true,
+  // },
   eslint: {
     ignoreDuringBuilds: true, 
   },
