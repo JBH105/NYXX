@@ -43,7 +43,7 @@ const route=useRouter()
     >
       <div className="ml-[6px]">
         <div className="h-6 w-[224px] pt-1">
-          <a
+          {/* <a
             className="text-sm font-normal text-navy-700 hover:underline dark:text-white dark:hover:text-white"
             href=" "
           >
@@ -52,7 +52,7 @@ const route=useRouter()
               {' '}
               /{' '}
             </span>
-          </a>
+          </a> */}
           <NavLink
             className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white"
             href="#"

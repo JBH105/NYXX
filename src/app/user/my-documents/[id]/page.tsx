@@ -4,8 +4,10 @@ import Card from 'components/card';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getSingleDocument } from '../../../../../backendActions/documents';
-import { toast } from 'react-toastify';
+import Markdown from 'react-markdown'
+import { toast } from 'react-toastify'
 import AnonymizeTable from '../../../../components/document_anonymize/AnonymizeTable';
+
 const Page = () => {
   let { id } = useParams();
 
@@ -19,13 +21,11 @@ const Page = () => {
     }
   }, [docData]);
 
-  console.log('docData+++', docData);
-  console.log('docData+++', jsonData);
-
   const getSingleDocumentApi = async (docId: any) => {
     try {
       let res = await getSingleDocument(docId);
       if (res.status_code == 200) {
+        console.log('res.detail', res)
         setDocData(res.detail);
       } else {
         toast.error(res.detail);
@@ -42,6 +42,7 @@ const Page = () => {
       setDocData('');
     }
   }, [id]);
+  console.log('docData', docData)
   return (
     <Card extra={'w-full h-full mt-3'}>
       <div className={`flex  px-4  py-4 w-full`}>
@@ -50,8 +51,8 @@ const Page = () => {
             Analyze
           </div>
           {docData?.analyzeData ? (
-            <div className="mt-4 text-base font-normal text-navy-700 dark:text-white whitespace-pre text-balance">
-              {docData?.analyzeData}
+            <div className='markdown'>
+              <Markdown>{docData?.analyzeData}</Markdown>
             </div>
           ) : (
             <div className="self-center py-4 text-center text-base font-bold text-navy-700 dark:text-white">

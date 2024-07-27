@@ -91,14 +91,14 @@ const routes = [
     icon: <HiDocumentSearch className="text-inherit h-5 w-5" />,
   },
   {
-    name: 'Projects',
-    path: '/dashboards/default',
+    name: 'Cases',
+    path: '/cases',
     layout: '/user',
     icon: <GrDocumentPpt className="text-inherit h-5 w-5" />,
   },
   {
     name: 'Search Documents',
-    path: '/dashboards/default',
+    path: '/search-documents',
     layout: '/user',
     icon: <HiOutlineDocumentSearch className="text-inherit h-5 w-5" />,
   },

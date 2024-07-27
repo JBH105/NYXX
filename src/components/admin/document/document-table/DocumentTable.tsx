@@ -339,7 +339,7 @@ function DocumentTable(props: { tableData: any }) {
         </div> */}
       </div>
 
-      <div className="mt-8 overflow-x-scroll xl:overflow-x-hidden">
+      <div className="mt-8 overflow-x-scroll">
         <table className="w-full">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -350,7 +350,7 @@ function DocumentTable(props: { tableData: any }) {
                       key={header.id}
                       colSpan={header.colSpan}
                       onClick={header.column.getToggleSortingHandler()}
-                      className="cursor-pointer whitespace-nowrap border-b border-gray-200 pb-2 pr-4 pt-4 text-start dark:border-white/30"
+                      className={`cursor-pointer whitespace-nowrap border-b border-gray-200 pb-2 pr-4 pt-4 text-start dark:border-white/30 ${header.id === "action" ? 'sticky right-0 bg-white pl-3' : ''}`}
                     >
                       <div className="items-center justify-between text-xs text-gray-200">
                         {flexRender(
@@ -377,9 +377,11 @@ function DocumentTable(props: { tableData: any }) {
                   <tr key={row.id}>
                     {row.getVisibleCells().map((cell) => {
                       return (
-                        <td
+                       <td
                           key={cell.id}
-                          className="min-w-[150px] border-white/0 py-3  pr-4"
+                          className={`min-w-[150px] border-white/0 py-3 pr-4 ${
+                          cell.column.id === 'action' ? 'sticky right-0 bg-white pl-3' : ''
+                        }`}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
