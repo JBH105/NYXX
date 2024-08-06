@@ -4,6 +4,7 @@ import * as z from 'zod';
 import { db } from '../lib/db';
 import axios from 'axios';
 import moment from 'moment';
+import { apiPassword, axiosInstance } from 'utils/axios';
 
 
 
@@ -11,9 +12,9 @@ import moment from 'moment';
 export const uploadDocument = async (values: any) => {
   try {
     const existingDocument = await db.documentUploads.findFirst({
-      where: { documentName:values.documentName ,userId:values.userId},
+      where: { documentName: values.documentName, userId: values.userId },
     });
-    console.log("existingDocument",existingDocument)
+    console.log("existingDocument", existingDocument)
 
     if (existingDocument) {
       console.log("agia-------")
@@ -57,7 +58,7 @@ export const updateDocument = async (
   currentTime: any,
   analyzeData: any,
   anonymizeData: any,
-  status:string,
+  status: string,
 ) => {
   try {
     console.log('currentTime===>', currentTime);
@@ -70,7 +71,7 @@ export const updateDocument = async (
         status: status,
         processingTimestamp: currentTime,
         analyzeData: analyzeData,
-        anonymizeData:anonymizeData ,
+        anonymizeData: anonymizeData,
       },
     });
     return { status_code: 200, detail: documentData };
@@ -93,7 +94,7 @@ export const getDocumentByUserId = async (userId: any) => {
 };
 
 
-export const getSingleDocument= async (documentUid: any) => {
+export const getSingleDocument = async (documentUid: any) => {
   try {
     let data = await db.documentUploads.findFirst({
       where: { documentUid },
@@ -171,84 +172,98 @@ const checkDocumentStatus = async (
   try {
     console.log('Document processing complete for', contractId, docId);
     let anonymizeResult = await anonymizeDocument(contractId);
+    console.log('anonymizeResult.data', anonymizeResult.data)
     clearInterval(intervalId);
     if (
       anonymizeResult?.status == 200 &&
       anonymizeResult?.data?.result == 'Success!'
     ) {
-      try{
+      try {
         let analyzeResult = await analyzeDocument(contractId);
+        console.log('analyzeResult.data', analyzeResult.data);
+
         if (
           analyzeResult?.status == 200 &&
           analyzeResult?.data.result == 'Success!'
         ) {
-          clearInterval(intervalId);
-          let docData = documentStatuses.find(
-            (obj) => obj.contractId == contractId,
-          );
-          let analyzeData = analyzeResult.data.recommendations;
-          let anonymizeData = anonymizeResult.data.items;
-          const currentDate = moment();
-          const pastDate = moment(docData.startTime);
-          const seconds = currentDate.diff(pastDate, 'seconds');
-          const minutes = currentDate.diff(pastDate, 'minutes');
-          const hours = currentDate.diff(pastDate, 'hours');
-          const days = currentDate.diff(pastDate, 'days');
-          let calculateTime = `${hours}:${minutes}:${seconds}`;
-          try {
-            let res = await updateDocument(
-              docId,
-              calculateTime,
-              analyzeData,
-              anonymizeData,
-              "complete"
-            );
-          
-            if (res.status_code == 200) {
-              
-              removeDocumentStatus(contractId, docId, intervalId);
-            } else {
-              console.log('error', res.detail);
+          let newIntervalId = null;
+          const getRecommendationsApi = async () => {
+            try {
+              let docData = documentStatuses.find(
+                (obj) => obj.contractId == contractId,
+              );
+              const analyzeData = await getRecommendations(contractId);
+              console.log('analyzeData.data', analyzeData.data)
+              if (analyzeData.status == 200 && analyzeData?.data?.result == 'Success!') {
+                clearInterval(newIntervalId)
+                let anonymizeData = anonymizeResult.data.items;
+                const currentDate = moment();
+                const pastDate = moment(docData.startTime);
+                const seconds = currentDate.diff(pastDate, 'seconds');
+                const minutes = currentDate.diff(pastDate, 'minutes');
+                const hours = currentDate.diff(pastDate, 'hours');
+                const days = currentDate.diff(pastDate, 'days');
+                let calculateTime = `${hours}:${minutes}:${seconds}`;
+                try {
+                  let res = await updateDocument(
+                    docId,
+                    calculateTime,
+                    analyzeData.data.recommendations,
+                    anonymizeData,
+                    "complete"
+                  );
+
+                  if (res.status_code == 200) {
+                    removeDocumentStatus(contractId, docId, intervalId);
+                  } else {
+                    console.log('error', res.detail);
+                  }
+                } catch (err) {
+                  console.log(err);
+                }
+              }
+            } catch (error) {
+              clearInterval(newIntervalId);
+              console.log(error, "error")
             }
-          } catch (err) {
-            console.log(err);
           }
+          newIntervalId = setInterval(getRecommendationsApi, 3000);
         }
 
-      }catch(err){
+      } catch (err) {
         clearInterval(intervalId);
-        console.log("error--",err)
+        console.log("error--", err)
       }
-    
-    }else{
 
-    
-        clearInterval(intervalId);
-        let docData = documentStatuses.find(
-          (obj) => obj.contractId == contractId,
+    } else {
+
+
+      clearInterval(intervalId);
+      let docData = documentStatuses.find(
+        (obj) => obj.contractId == contractId,
+      );
+      let analyzeData = "";
+      let anonymizeData = "";
+
+      let calculateTime = "";
+      try {
+        let res = await updateDocument(
+          docId,
+          calculateTime,
+          analyzeData,
+          anonymizeData,
+          "failed"
         );
-        let analyzeData = "";
-        let anonymizeData ="";
-
-        let calculateTime ="";
-        try {
-          let res = await updateDocument(
-            docId,
-            calculateTime,
-            analyzeData,
-            anonymizeData,
-            "failed"
-          );
-          if (res.status_code == 200) {
-            removeDocumentStatus(contractId, docId, intervalId);
-          } else {
-            console.log('error', res.detail);
-          }
-        } catch (err) {
-          console.log(err);
+        if (res.status_code == 200) {
+          removeDocumentStatus(contractId, docId, intervalId);
+        } else {
+          console.log('error', res.detail);
         }
-     
-    
+      } catch (err) {
+        console.log(err);
+      }
+
+
     }
   } catch (err) {
     console.error(err);
@@ -257,8 +272,8 @@ const checkDocumentStatus = async (
       (obj) => obj.contractId == contractId,
     );
     let analyzeData = "";
-    let anonymizeData ="";
-    let calculateTime ="";
+    let anonymizeData = "";
+    let calculateTime = "";
     try {
       let res = await updateDocument(
         docId,
@@ -370,3 +385,7 @@ const removeDocumentStatus = (
       ),
   );
 };
+
+export const getRecommendations = async (contractId: string) => {
+  return axiosInstance.get(`/recommendations?password=${apiPassword}&contract_id=${contractId}`);
+}
